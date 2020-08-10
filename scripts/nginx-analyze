@@ -4,4 +4,5 @@ set -v
 
 command="cat /var/log/nginx/access.log | alp --matching-groups '/candidates/\d+,/political_parties/.+' --sort=sum --reverse -o count,2xx,method,uri,min,max,sum,avg,p99 ltsv"
 
+echo "It's $(date)"
 ssh isu01 "$command"
