@@ -1,0 +1,15 @@
+[Unit]
+Description = isucon9 qualifier main application in golang
+
+[Service]
+WorkingDirectory=/home/ishocon/ISUCON-2020-suburi/webapp/go/
+
+ExecStart = /home/ishocon/ISUCON-2020-suburi/webapp/go/webapp
+
+Restart   = always
+Type      = simple
+User      = ishocon
+Group     = ishocon
+
+[Install]
+WantedBy = multi-user.target
