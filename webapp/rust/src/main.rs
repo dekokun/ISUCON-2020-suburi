@@ -24,13 +24,14 @@ lazy_static! {
     };
 }
 
-// Vote Model
-// type Vote struct {
-// 	ID          int
-// 	UserID      int
-// 	CandidateID int
-// 	Keyword     string
-// }
+lazy_static! {
+    pub static ref DATABASE_URL: String = {
+        let user = get_env("ISHOCON2_DB_USER", "ishocon");
+        let pass = get_env("ISHOCON2_DB_PASSWORD", "ishocon");
+        let db_name = get_env("ISHOCON2_DB_NAME", "ishocon2");
+        format!("mysql://{}:{}@localhost/{}", user, pass, db_name)
+    };
+}
 
 #[derive(Debug, Clone, PartialEq)]
 struct Vote {
@@ -39,13 +40,6 @@ struct Vote {
     candidate_id: usize,
     keyword: String,
 }
-
-// type Candidate struct {
-// 	ID             int
-// 	Name           string
-// 	PoliticalParty string
-// 	Sex            string
-// }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 struct Candidate {
@@ -66,13 +60,18 @@ impl Default for Candidate {
     }
 }
 
-async fn get_all_candidates() -> Vec<Candidate> {
-    vec![Candidate::default()]
+async fn get_all_candidates(pool: Pool<MySql>) -> Vec<Candidate> {
+    let candidates = sqlx::query!("select * from candidates")
+        .fetch_all(&pool) // -> Vec<{ country: String, count: i64 }>
+        .await;
+    dbg!(candidates);
+
+    vec![]
 }
 
 #[get("/vote")]
-async fn get_vote() -> impl Responder {
-    let candidates = get_all_candidates().await;
+async fn get_vote(data: Data) -> impl Responder {
+    let candidates = get_all_candidates(data.pool.clone()).await;
     let mut context = Context::new();
     context.insert("greeting", &"hello");
     context.insert("candidates", &candidates);
@@ -124,24 +123,17 @@ struct AppData {
 
 #[actix_rt::main]
 async fn main() -> std::io::Result<()> {
-    let user = get_env("ISHOCON2_DB_USER", "ishocon");
-    let pass = get_env("ISHOCON2_DB_PASSWORD", "ishocon");
-    let db_name = get_env("ISHOCON2_DB_NAME", "ishocon2");
+    env::set_var("RUST_LOG", "info");
+    env_logger::init();
+
     let env_args: Vec<_> = std::env::args().collect();
     if env_args.len() != 2 {
         panic!("port must be specified!");
     }
-
     let port = &env_args[1];
-
     let addr = format!("127.0.0.1:{}", port);
 
-    env::set_var("RUST_LOG", "info");
-    env_logger::init();
-    info!("The server is running on {:?}", addr);
-
-    let pool =
-        MySqlPool::connect(&format!("mysql://{}:{}@localhost/{}", user, pass, db_name)).await;
+    let pool = MySqlPool::connect(&DATABASE_URL).await;
 
     let pool = pool.unwrap();
 
