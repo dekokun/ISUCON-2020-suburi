@@ -1,0 +1,18 @@
+[package]
+name = "our-app"
+version = "0.1.0"
+authors = ["ishocon"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+actix-web = "2"
+# for async-std
+sqlx = {version="0.4.0-beta.1", features = [ "mysql" ]}
+tera = "1.4.0"
+redis = "0.17.0"
+actix-rt = "1.0.0"
+serde = { version = "1.0", features = ["derive"] }
+env_logger = "*"
+log = "0.4.11"
