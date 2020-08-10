@@ -1,5 +1,7 @@
 use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
-use sqlx::{query, MySql, MySqlPool, Pool};
+use env_logger;
+use log::info;
+use sqlx::{MySql, MySqlPool, Pool};
 use std::env;
 use tera::Tera;
 
@@ -73,11 +75,21 @@ async fn main() -> std::io::Result<()> {
     let user = get_env("ISHOCON2_DB_USER", "ishocon");
     let pass = get_env("ISHOCON2_DB_PASSWORD", "ishocon");
     let db_name = get_env("ISHOCON2_DB_NAME", "ishocon2");
-    dbg!(&user, &pass, &db_name);
+    let env_args: Vec<_> = std::env::args().collect();
+    if env_args.len() != 2 {
+        panic!("port must be specified!");
+    }
+
+    let port = &env_args[1];
+
+    let addr = format!("127.0.0.1:{}", port);
+
+    env::set_var("RUST_LOG", "info");
+    env_logger::init();
+    info!("The server is running on {:?}", addr);
 
     let pool =
         MySqlPool::connect(&format!("mysql://{}:{}@localhost/{}", user, pass, db_name)).await;
-    dbg!(&pool);
 
     let pool = pool.unwrap();
 
@@ -91,7 +103,7 @@ async fn main() -> std::io::Result<()> {
             .service(initialize)
         // .service(vote)
     })
-    .bind("127.0.0.1:3000")?
+    .bind(addr)?
     .run()
     .await
 }
