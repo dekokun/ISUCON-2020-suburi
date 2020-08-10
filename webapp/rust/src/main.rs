@@ -46,7 +46,7 @@ struct Vote {
 // 	Sex            string
 // }
 
-#[derive(Debug, PartialEq, Deserialize)]
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
 struct Candidate {
     id: usize,
     name: String,
@@ -74,6 +74,8 @@ async fn get_vote() -> impl Responder {
     let candidates = get_all_candidates().await;
     let mut context = Context::new();
     context.insert("greeting", &"hello");
+    let candidate = Candidate::default();
+    context.insert("candidate", &candidate);
     match TEMPLATES.render("vote.tera.html", &context) {
         Ok(s) => HttpResponse::Ok().body(s),
         _ => unimplemented!(),
