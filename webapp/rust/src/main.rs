@@ -63,9 +63,9 @@ impl Default for Candidate {
     }
 }
 
-async fn get_all_candidates(pool: Pool<MySql>) -> Vec<Candidate> {
+async fn get_all_candidates(pool: &Pool<MySql>) -> Vec<Candidate> {
     let candidates: Vec<_> = sqlx::query!("select name from candidates")
-        .fetch_all(&pool) // -> Vec<{ country: String, count: i64 }>
+        .fetch_all(pool) // -> Vec<{ country: String, count: i64 }>
         .await
         .unwrap();
     candidates
@@ -79,7 +79,7 @@ async fn get_all_candidates(pool: Pool<MySql>) -> Vec<Candidate> {
 
 #[get("/vote")]
 async fn get_vote(data: Data) -> impl Responder {
-    let candidates = get_all_candidates(data.pool.clone()).await;
+    let candidates = get_all_candidates(&data.pool).await;
     let mut context = Context::new();
     context.insert("greeting", &"hello");
     context.insert("candidates", &candidates);
@@ -97,6 +97,8 @@ pub struct VoteParams {
     name: String,
     address: String,
     mynumber: String,
+    candidate: String,
+    vote_count: i32,
 }
 
 async fn get_candidate_by_name(pool: &Pool<MySql>, name: &str) -> Candidate {
@@ -113,15 +115,18 @@ async fn get_candidate_by_name(pool: &Pool<MySql>, name: &str) -> Candidate {
     }
 }
 
-async fn get_user_voted_count(pool: &Pool<MySql>, mynumber: &str) -> usize {
-    // sqlx::query!(
-    //     "SELECT COUNT(*) AS count FROM votes WHERE user_id =  ?",
-    //     userID
-    // )
-    1
+async fn get_user_voted_count(pool: &Pool<MySql>, user_id: i32) -> i32 {
+    sqlx::query!(
+        "SELECT COUNT(*) AS count FROM votes WHERE user_id =  ?",
+        user_id
+    )
+    .fetch_one(pool)
+    .await
+    .unwrap()
+    .count as i32
 }
 
-async fn get_user(pool: &Pool<MySql>, name: &str, address: &str, mynumber: &str) -> User {
+async fn get_user(pool: &Pool<MySql>, name: &str, address: &str, mynumber: &str) -> Option<User> {
     let user = sqlx::query_as!(
         User,
         "SELECT * FROM users WHERE name = ? AND address = ? AND mynumber = ?",
@@ -129,9 +134,8 @@ async fn get_user(pool: &Pool<MySql>, name: &str, address: &str, mynumber: &str)
         address,
         mynumber
     )
-    .fetch_one(pool) // -> Vec<{ country: String, count: i64 }>
-    .await
-    .unwrap();
+    .fetch_one(pool)
+    .await;
     user
 }
 
@@ -146,14 +150,26 @@ struct User {
 
 #[post("/vote")]
 async fn post_vote(data: Data, params: Form<VoteParams>) -> impl Responder {
-    let mut ctx = tera::Context::new();
     let pool = &data.pool;
-    let name = params.name;
-    let address = params.address;
-    let mynumber = params.mynumber;
-    let user = get_user(pool, &name, &address, &mynumber);
+    let name = &params.name;
+    let address = &params.address;
+    let mynumber = &params.mynumber;
+    let candidate = &params.candidate;
+    let vote_count = params.vote_count;
 
-    let voted_count = get_user_voted_count(&data.pool, &params.mynumber).await;
+    let user = get_user(pool, name, address, mynumber).await;
+    let candidate = get_candidate_by_name(pool, candidate).await;
+
+    let voted_count = get_user_voted_count(&pool, user.id).await;
+    let candidates = get_all_candidates(pool).await;
+
+    // let message = if user.votes < voted_count + vote_count {
+    //     "投票数が上限を超えています"
+    // } else if candidate == "" {
+    //     "候補者を記入してください"
+    // } else if
+
+    dbg!(voted_count);
 
     HttpResponse::Ok().body("body")
 }
