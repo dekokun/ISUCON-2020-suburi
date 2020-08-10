@@ -1,0 +1,7 @@
+#!/bin/bash
+
+set -v
+
+command="sudo cat /var/log/mysql/slow.log | pt-query-digest"
+
+ssh isu01 "$command"

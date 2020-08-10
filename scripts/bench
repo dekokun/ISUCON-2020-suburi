@@ -6,4 +6,5 @@ command="./benchmark --ip 13.230.163.241 --workload 10"
 
 ./scripts/deploy
 ssh bench "$command"
-./scripts/analyze
+./scripts/nginx-analyze
+./scripts/mysql-analyze
