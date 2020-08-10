@@ -113,6 +113,11 @@ async fn initialize(data: Data) -> impl Responder {
     HttpResponse::Ok().body("Finished")
 }
 
+#[get("/candidates/{candidateID}")]
+async fn get_candidate(info: web::Path<u32>) -> impl Responder {
+    HttpResponse::Ok().body(format!("Your ID: {}", info))
+}
+
 fn get_env(key: &'static str, fallback: &'static str) -> String {
     match env::var_os(key) {
         Some(val) => val.into_string().unwrap(),
@@ -151,6 +156,7 @@ async fn main() -> std::io::Result<()> {
             .service(index)
             .service(initialize)
             .service(get_vote)
+            .service(get_candidate)
             .service(Files::new("/", "./public/").index_file("index.html"))
         // .service(vote)
     })
