@@ -127,10 +127,10 @@ async fn initialize(data: Data) -> impl Responder {
     HttpResponse::Ok().body("Finished")
 }
 
-#[get("/candidates/{candidateID}")]
-async fn get_candidate(data: Data, info: web::Path<u32>) -> impl Responder {
-    let candidate = get_candidate_by_id(data.pool.clone(), 20).await; // 一旦ID固定
-    HttpResponse::Ok().body(format!("Your ID: {}, Name: {}, Political Party: {}, Sex: {}", info, candidate.name, candidate.political_party, candidate.sex))
+#[get("/candidates/{candidateId}")]
+async fn get_candidate(data: Data, candidate_id: web::Path<u32>) -> impl Responder {
+    let candidate = get_candidate_by_id(data.pool.clone(), *candidate_id).await;
+    HttpResponse::Ok().body(format!("Your ID: {}, Name: {}, Political Party: {}, Sex: {}", candidate.id, candidate.name, candidate.political_party, candidate.sex))
 }
 
 fn get_env(key: &'static str, fallback: &'static str) -> String {
