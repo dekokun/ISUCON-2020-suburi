@@ -1,0 +1,16 @@
+version: '3.0'
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile_app
+    command: /docker/start_app.sh
+    volumes:
+      - storage_app:/var/lib/mysql
+      - ./webapp:/home/ishocon/webapp
+    ports:
+      - "443:443"
+      - "3306:3306"
+
+volumes:
+  storage_app:
