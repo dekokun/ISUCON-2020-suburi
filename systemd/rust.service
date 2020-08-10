@@ -1,0 +1,16 @@
+[Unit]
+Description = rust for dekokun
+
+[Service]
+WorkingDirectory=/home/ishocon/ISUCON-2020-suburi/webapp/rust
+
+Environment=DATABASE_URL=mysql://ishocon:ishocon@localhost/ishocon2
+ExecStart = /home/ishocon/.cargo/bin/cargo run --release 3000
+
+Restart   = always
+Type      = simple
+User      = ishocon
+Group     = ishocon
+
+[Install]
+WantedBy = multi-user.target
