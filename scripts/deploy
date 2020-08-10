@@ -11,7 +11,7 @@ command="source ~/.bash_profile; cd /home/ishocon/ISUCON-2020-suburi/webapp/rust
 rotate_nginx="sudo mv /var/log/nginx/access.log /var/log/nginx/access.log.$now && sudo ln -sf /var/log/nginx/access.log.$now /var/log/nginx/access.log.latest; sudo systemctl reload nginx.service"
 rotate_mysql="sudo mv /var/log/mysql/slow.log /var/log/mysql/slow.log.$now && sudo ln -sf /var/log/mysql/slow.log.$now /var/log/mysql/slow.log.latest; mysqladmin -uisucon -pisucon flush-logs"
 
-ssh isucon@isu01 "$command"
+ssh isu01 "$command"
 
 ssh isu01 "$rotate_nginx"
-ssh isucon@isu01 "$rotate_mysql"
+ssh isu01 "$rotate_mysql"
