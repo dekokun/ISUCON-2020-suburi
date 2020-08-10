@@ -2,6 +2,6 @@
 
 set -v
 
-command="./benchmark --ip 54.250.90.239 --workload 3"
+command="./benchmark --ip 54.250.90.239 --workload 10"
 
 ssh bench "$command"
