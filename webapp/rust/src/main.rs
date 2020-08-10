@@ -60,6 +60,20 @@ impl Default for Candidate {
     }
 }
 
+async fn get_candidate_by_id(pool: Pool<MySql>, candidate_id: u32) -> Candidate {
+    let candidate = sqlx::query!(
+            "select * from candidates where id = ?", 
+            candidate_id)
+        .fetch_one(&pool).await.unwrap();
+    
+    Candidate {
+        id: candidate.id as usize,
+        name: candidate.name,
+        political_party: candidate.political_party,
+        sex: candidate.sex,
+    }
+}
+
 async fn get_all_candidates(pool: Pool<MySql>) -> Vec<Candidate> {
     let candidates: Vec<_> = sqlx::query!("select name from candidates")
         .fetch_all(&pool) // -> Vec<{ country: String, count: i64 }>
@@ -114,8 +128,9 @@ async fn initialize(data: Data) -> impl Responder {
 }
 
 #[get("/candidates/{candidateID}")]
-async fn get_candidate(info: web::Path<u32>) -> impl Responder {
-    HttpResponse::Ok().body(format!("Your ID: {}", info))
+async fn get_candidate(data: Data, info: web::Path<u32>) -> impl Responder {
+    let candidate = get_candidate_by_id(data.pool.clone(), 20).await; // 一旦ID固定
+    HttpResponse::Ok().body(format!("Your ID: {}, Name: {}, Political Party: {}, Sex: {}", info, candidate.name, candidate.political_party, candidate.sex))
 }
 
 fn get_env(key: &'static str, fallback: &'static str) -> String {
