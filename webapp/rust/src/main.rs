@@ -1,7 +1,10 @@
 use actix_files::Files;
-use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
+use actix_web::{
+    get, post,
+    web::{self, Form},
+    App, HttpResponse, HttpServer, Responder,
+};
 use env_logger;
-use log::info;
 use serde::{Deserialize, Serialize};
 use sqlx::{MySql, MySqlPool, Pool};
 use std::env;
@@ -89,13 +92,71 @@ async fn get_vote(data: Data) -> impl Responder {
     }
 }
 
-// #[post("/vote")]
-// async fn post_vote() -> impl Responder {
-//     let mut ctx = tera::Context::new();
-//     let candidates = get_all_candidates();
-//     let template = unimplemented!();
-//     HttpResponse::Ok().body(template)
-// }
+#[derive(Debug, Serialize, Deserialize)]
+pub struct VoteParams {
+    name: String,
+    address: String,
+    mynumber: String,
+}
+
+async fn get_candidate_by_name(pool: &Pool<MySql>, name: &str) -> Candidate {
+    let candidate = sqlx::query!("select * from candidates where name = ?", name)
+        .fetch_one(pool) // -> Vec<{ country: String, count: i64 }>
+        .await
+        .unwrap();
+
+    Candidate {
+        id: candidate.id as usize,
+        name: candidate.name,
+        political_party: candidate.political_party,
+        sex: candidate.sex,
+    }
+}
+
+async fn get_user_voted_count(pool: &Pool<MySql>, mynumber: &str) -> usize {
+    // sqlx::query!(
+    //     "SELECT COUNT(*) AS count FROM votes WHERE user_id =  ?",
+    //     userID
+    // )
+    1
+}
+
+async fn get_user(pool: &Pool<MySql>, name: &str, address: &str, mynumber: &str) -> User {
+    let user = sqlx::query_as!(
+        User,
+        "SELECT * FROM users WHERE name = ? AND address = ? AND mynumber = ?",
+        name,
+        address,
+        mynumber
+    )
+    .fetch_one(pool) // -> Vec<{ country: String, count: i64 }>
+    .await
+    .unwrap();
+    user
+}
+
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+struct User {
+    id: i32,
+    name: String,
+    address: String,
+    mynumber: String,
+    votes: i32,
+}
+
+#[post("/vote")]
+async fn post_vote(data: Data, params: Form<VoteParams>) -> impl Responder {
+    let mut ctx = tera::Context::new();
+    let pool = &data.pool;
+    let name = params.name;
+    let address = params.address;
+    let mynumber = params.mynumber;
+    let user = get_user(pool, &name, &address, &mynumber);
+
+    let voted_count = get_user_voted_count(&data.pool, &params.mynumber).await;
+
+    HttpResponse::Ok().body("body")
+}
 
 #[get("/")]
 async fn index(data: web::Data<AppData>) -> impl Responder {
@@ -151,6 +212,7 @@ async fn main() -> std::io::Result<()> {
             .service(index)
             .service(initialize)
             .service(get_vote)
+            .service(post_vote)
             .service(Files::new("/", "./public/").index_file("index.html"))
         // .service(vote)
     })
