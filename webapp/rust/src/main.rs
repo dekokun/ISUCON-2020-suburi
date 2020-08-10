@@ -136,7 +136,7 @@ async fn main() -> std::io::Result<()> {
         panic!("port must be specified!");
     }
     let port = &env_args[1];
-    let addr = format!("127.0.0.1:{}", port);
+    let addr = format!("0.0.0.0:{}", port);
 
     let pool = MySqlPool::connect(&DATABASE_URL).await;
 
