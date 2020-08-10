@@ -130,7 +130,15 @@ async fn initialize(data: Data) -> impl Responder {
 #[get("/candidates/{candidateId}")]
 async fn get_candidate(data: Data, candidate_id: web::Path<u32>) -> impl Responder {
     let candidate = get_candidate_by_id(data.pool.clone(), *candidate_id).await;
-    HttpResponse::Ok().body(format!("Your ID: {}, Name: {}, Political Party: {}, Sex: {}", candidate.id, candidate.name, candidate.political_party, candidate.sex))
+    let mut context = Context::new();
+    context.insert("candidate", &candidate);
+    match TEMPLATES.render("candidate.tera.html", &context) {
+        Ok(s) => HttpResponse::Ok().body(s),
+        e => {
+            dbg!(e);
+            unimplemented!()
+        }
+    }
 }
 
 fn get_env(key: &'static str, fallback: &'static str) -> String {
