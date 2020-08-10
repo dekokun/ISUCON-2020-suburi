@@ -1596,6 +1596,7 @@ dependencies = [
  "actix-rt",
  "actix-web",
  "env_logger",
+ "lazy_static",
  "log",
  "redis",
  "serde",
