@@ -4,13 +4,31 @@ services:
     build:
       context: .
       dockerfile: Dockerfile_app
-    command: /docker/start_app.sh
+    command:
+      [
+        "wait-for-it",
+        "db:3306",
+        "-t",
+        "30",
+        "--",
+        "/docker/start_app.sh",
+      ]
     volumes:
       - storage_app:/var/lib/mysql
       - ./webapp:/home/ishocon/webapp
     ports:
       - "443:443"
-      - "3306:3306"
-
+  db:
+    image: mysql:5.7
+    environment:
+      MYSQL_ROOT_PASSWORD: ishocon
+      MYSQL_DATABASE: ishocon2
+      MYSQL_USER: ishocon
+      MYSQL_PASSWORD: ishocon
+    ports:
+      - 3306:3306
+    volumes:
+      - ./docker/mysql:/var/lib/mysql
+    container_name: mysql
 volumes:
   storage_app:

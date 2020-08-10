@@ -4,7 +4,7 @@ MAINTAINER showwin <showwin_kmc@yahoo.co.jp>
 ENV LANG en_US.UTF-8
 
 RUN apt-get update
-RUN apt-get install -y wget sudo less vim tzdata
+RUN apt-get install -y wget sudo less vim tzdata wait-for-it
 
 # ishocon ユーザ作成
 RUN groupadd -g 1001 ishocon && \
