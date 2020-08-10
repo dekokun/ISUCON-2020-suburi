@@ -61,12 +61,17 @@ impl Default for Candidate {
 }
 
 async fn get_all_candidates(pool: Pool<MySql>) -> Vec<Candidate> {
-    let candidates = sqlx::query!("select * from candidates")
+    let candidates: Vec<_> = sqlx::query!("select name from candidates")
         .fetch_all(&pool) // -> Vec<{ country: String, count: i64 }>
-        .await;
-    dbg!(candidates);
-
-    vec![]
+        .await
+        .unwrap();
+    candidates
+        .into_iter()
+        .map(|can| Candidate {
+            name: can.name,
+            ..Default::default()
+        })
+        .collect()
 }
 
 #[get("/vote")]
