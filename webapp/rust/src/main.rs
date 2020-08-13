@@ -120,6 +120,11 @@ fn get_env(key: &'static str, fallback: &'static str) -> String {
     }
 }
 
+#[get("/political_parties/{name}")]
+async fn get_political_parties(data: Data, name: web::Path<String>) -> impl Responder {
+    HttpResponse::Ok().body(name.clone())
+}
+
 #[derive(Debug)]
 struct AppData {
     name: &'static str,
@@ -151,6 +156,7 @@ async fn main() -> std::io::Result<()> {
             .service(index)
             .service(initialize)
             .service(get_vote)
+            .service(get_political_parties)
             .service(Files::new("/", "./public/").index_file("index.html"))
         // .service(vote)
     })
