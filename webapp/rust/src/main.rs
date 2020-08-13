@@ -122,7 +122,15 @@ fn get_env(key: &'static str, fallback: &'static str) -> String {
 
 #[get("/political_parties/{name}")]
 async fn get_political_parties(data: Data, name: web::Path<String>) -> impl Responder {
-    HttpResponse::Ok().body(name.clone())
+    let mut context = Context::new();
+    context.insert("name", &name.clone());
+    match TEMPLATES.render("political_parties.tera.html", &context) {
+        Ok(s) => HttpResponse::Ok().body(s),
+        e => {
+            let _ = dbg!(e);
+            unimplemented!()
+        }
+    }
 }
 
 #[derive(Debug)]
