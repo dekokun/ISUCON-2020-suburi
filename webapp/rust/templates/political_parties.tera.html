@@ -9,22 +9,18 @@
   <div class="row">
     <div id="info" class="jumbotron">
       <h2>得票数</h2>
-      <p id="votes" >{#{{ votes }}#}</p>
+      <p id="votes" >{{ votes }}</p>
       <h2>候補者</h2>
       <ul id="members">
-      {#
         {% for candidate in candidates %}
           <li>{{ candidate.name }}</li>
         {% endfor %}
-      #}
       </ul>
       <h2>支持者の声</h2>
       <ul id="voices">
-      {#
         {% for keyword in keywords %}
           <li>{{ keyword }}</li>
         {% endfor %}
-      #}
       </ul>
     </div>
   </div>
