@@ -60,6 +60,20 @@ impl Default for Candidate {
     }
 }
 
+async fn get_candidate_by_id(pool: Pool<MySql>, candidate_id: u32) -> Candidate {
+    let candidate = sqlx::query!(
+            "select * from candidates where id = ?", 
+            candidate_id)
+        .fetch_one(&pool).await.unwrap();
+    
+    Candidate {
+        id: candidate.id as usize,
+        name: candidate.name,
+        political_party: candidate.political_party,
+        sex: candidate.sex,
+    }
+}
+
 async fn get_all_candidates(pool: Pool<MySql>) -> Vec<Candidate> {
     let candidates: Vec<_> = sqlx::query!("select name from candidates")
         .fetch_all(&pool) // -> Vec<{ country: String, count: i64 }>
@@ -113,6 +127,20 @@ async fn initialize(data: Data) -> impl Responder {
     HttpResponse::Ok().body("Finished")
 }
 
+#[get("/candidates/{candidateId}")]
+async fn get_candidate(data: Data, candidate_id: web::Path<u32>) -> impl Responder {
+    let candidate = get_candidate_by_id(data.pool.clone(), *candidate_id).await;
+    let mut context = Context::new();
+    context.insert("candidate", &candidate);
+    match TEMPLATES.render("candidate.tera.html", &context) {
+        Ok(s) => HttpResponse::Ok().body(s),
+        e => {
+            dbg!(e);
+            unimplemented!()
+        }
+    }
+}
+
 fn get_env(key: &'static str, fallback: &'static str) -> String {
     match env::var_os(key) {
         Some(val) => val.into_string().unwrap(),
@@ -151,6 +179,7 @@ async fn main() -> std::io::Result<()> {
             .service(index)
             .service(initialize)
             .service(get_vote)
+            .service(get_candidate)
             .service(Files::new("/", "./public/").index_file("index.html"))
         // .service(vote)
     })
