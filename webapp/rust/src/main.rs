@@ -49,6 +49,15 @@ struct Candidate {
     sex: String,
 }
 
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+struct ElectionResult {
+    id: i32,
+    name: String,
+    political_party: String,
+    sex: String,
+    count: Option<i64>,
+}
+
 impl Default for Candidate {
     fn default() -> Self {
         Self {
@@ -120,10 +129,11 @@ fn get_env(key: &'static str, fallback: &'static str) -> String {
     }
 }
 
-async fn get_election_result(pool: Pool<MySql>) {
-    let ret = sqlx::query!(
+async fn get_election_result(pool: Pool<MySql>) -> Vec<ElectionResult> {
+    let ret: Vec<ElectionResult> = sqlx::query_as!(
+        ElectionResult,
         r#"
-		SELECT c.id, c.name, c.political_party, c.sex, v.count
+		SELECT c.id as id, c.name as name, c.political_party as political_party, c.sex as sex, v.count as count
 		FROM candidates AS c
 		LEFT OUTER JOIN
 	  	(SELECT candidate_id, COUNT(*) AS count
@@ -135,18 +145,26 @@ async fn get_election_result(pool: Pool<MySql>) {
     .fetch_all(&pool)
     .await
     .unwrap();
-    dbg!(ret);
-    todo!()
+    ret
 }
 
 #[get("/political_parties/{name}")]
 async fn get_political_parties(data: Data, name: web::Path<String>) -> impl Responder {
     let election_results = get_election_result(data.pool.clone()).await;
-    let candidates: Vec<Candidate> = vec![];
+    let mut votes = 0;
+    let name = &*name;
+    for v in &election_results {
+        if v.political_party == *name && v.count.is_some() {
+            votes += v.count.unwrap();
+        }
+    }
+    let candidates: Vec<ElectionResult> = election_results
+        .into_iter()
+        .filter(|c| c.political_party == *name)
+        .collect();
     let keywords: Vec<String> = vec![];
-    let votes = 0;
     let mut context = Context::new();
-    context.insert("name", &name.clone());
+    context.insert("name", name);
     context.insert("votes", &votes);
     context.insert("candidates", &candidates);
     context.insert("keywords", &keywords);
