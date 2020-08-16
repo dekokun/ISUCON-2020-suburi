@@ -148,6 +148,21 @@ async fn get_election_result(pool: Pool<MySql>) -> Vec<ElectionResult> {
     ret
 }
 
+async fn get_voice_supporter(pool: Pool<MySql>, candidates_ids: Vec<i32>) -> Vec<String> {
+    let ret = sqlx::query!(
+        r#"
+    SELECT keyword
+    FROM votes
+    WHERE candidate_id IN (?)
+    GROUP BY keyword
+    ORDER BY COUNT(*) DESC
+    LIMIT 10
+    "#,
+        candidates_ids
+    );
+    todo!()
+}
+
 #[get("/political_parties/{name}")]
 async fn get_political_parties(data: Data, name: web::Path<String>) -> impl Responder {
     let election_results = get_election_result(data.pool.clone()).await;
@@ -162,7 +177,8 @@ async fn get_political_parties(data: Data, name: web::Path<String>) -> impl Resp
         .into_iter()
         .filter(|c| c.political_party == *name)
         .collect();
-    let keywords: Vec<String> = vec![];
+    let keywords: Vec<String> =
+        get_voice_supporter(data.pool.clone(), candidates.iter().map(|c| c.id).collect()).await;
     let mut context = Context::new();
     context.insert("name", name);
     context.insert("votes", &votes);
