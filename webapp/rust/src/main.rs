@@ -120,8 +120,28 @@ fn get_env(key: &'static str, fallback: &'static str) -> String {
     }
 }
 
+async fn get_election_result(pool: Pool<MySql>) {
+    let ret = sqlx::query!(
+        r#"
+		SELECT c.id, c.name, c.political_party, c.sex, v.count
+		FROM candidates AS c
+		LEFT OUTER JOIN
+	  	(SELECT candidate_id, COUNT(*) AS count
+	  	FROM votes
+	  	GROUP BY candidate_id) AS v
+		ON c.id = v.candidate_id
+        ORDER BY v.count DESC"#
+    )
+    .fetch_all(&pool)
+    .await
+    .unwrap();
+    dbg!(ret);
+    todo!()
+}
+
 #[get("/political_parties/{name}")]
 async fn get_political_parties(data: Data, name: web::Path<String>) -> impl Responder {
+    let election_results = get_election_result(data.pool.clone()).await;
     let candidates: Vec<Candidate> = vec![];
     let keywords: Vec<String> = vec![];
     let votes = 0;
