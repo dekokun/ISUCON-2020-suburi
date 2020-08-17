@@ -149,18 +149,29 @@ async fn get_election_result(pool: Pool<MySql>) -> Vec<ElectionResult> {
 }
 
 async fn get_voice_supporter(pool: Pool<MySql>, candidates_ids: Vec<i32>) -> Vec<String> {
-    let ret = sqlx::query!(
-        r#"
+    // 動作確認SQL: insert into votes (user_id, candidate_id, keyword) values (1, 16, "応援してます");
+    let mut voices = vec![];
+    for candidates_id in candidates_ids {
+        let mut ret: Vec<String> = sqlx::query!(
+            r#"
     SELECT keyword
     FROM votes
-    WHERE candidate_id IN (?)
+    WHERE candidate_id = ?
     GROUP BY keyword
     ORDER BY COUNT(*) DESC
     LIMIT 10
     "#,
-        candidates_ids
-    );
-    todo!()
+            candidates_id
+        )
+        .fetch_all(&pool)
+        .await
+        .unwrap()
+        .into_iter()
+        .map(|v| v.keyword)
+        .collect();
+        voices.append(&mut ret);
+    }
+    voices
 }
 
 #[get("/political_parties/{name}")]
