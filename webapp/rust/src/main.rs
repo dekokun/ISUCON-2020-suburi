@@ -1,4 +1,5 @@
 use actix_files::Files;
+use actix_web::middleware::Logger;
 use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
 use env_logger;
 use log::info;
@@ -152,6 +153,7 @@ async fn main() -> std::io::Result<()> {
             .service(initialize)
             .service(get_vote)
             .service(Files::new("/", "./public/").index_file("index.html"))
+            .wrap(Logger::default())
         // .service(vote)
     })
     .bind(addr)?
