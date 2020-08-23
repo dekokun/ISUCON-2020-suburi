@@ -50,6 +50,15 @@ struct Candidate {
     sex: String,
 }
 
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+struct ElectionResult {
+    id: i32,
+    name: String,
+    political_party: String,
+    sex: String,
+    count: Option<i64>,
+}
+
 impl Default for Candidate {
     fn default() -> Self {
         Self {
@@ -121,6 +130,81 @@ fn get_env(key: &'static str, fallback: &'static str) -> String {
     }
 }
 
+async fn get_election_result(pool: Pool<MySql>) -> Vec<ElectionResult> {
+    let ret: Vec<ElectionResult> = sqlx::query_as!(
+        ElectionResult,
+        r#"
+		SELECT c.id as id, c.name as name, c.political_party as political_party, c.sex as sex, v.count as count
+		FROM candidates AS c
+		LEFT OUTER JOIN
+	  	(SELECT candidate_id, COUNT(*) AS count
+	  	FROM votes
+	  	GROUP BY candidate_id) AS v
+		ON c.id = v.candidate_id
+        ORDER BY v.count DESC"#
+    )
+    .fetch_all(&pool)
+    .await
+    .unwrap();
+    ret
+}
+
+async fn get_voice_supporter(pool: Pool<MySql>, candidates_ids: Vec<i32>) -> Vec<String> {
+    // 動作確認SQL: insert into votes (user_id, candidate_id, keyword) values (1, 16, "応援してます");
+    let mut voices = vec![];
+    for candidates_id in candidates_ids {
+        let mut ret: Vec<String> = sqlx::query!(
+            r#"
+    SELECT keyword
+    FROM votes
+    WHERE candidate_id = ?
+    GROUP BY keyword
+    ORDER BY COUNT(*) DESC
+    LIMIT 10
+    "#,
+            candidates_id
+        )
+        .fetch_all(&pool)
+        .await
+        .unwrap()
+        .into_iter()
+        .map(|v| v.keyword)
+        .collect();
+        voices.append(&mut ret);
+    }
+    voices
+}
+
+#[get("/political_parties/{name}")]
+async fn get_political_parties(data: Data, name: web::Path<String>) -> impl Responder {
+    let election_results = get_election_result(data.pool.clone()).await;
+    let mut votes = 0;
+    let name = &*name;
+    for v in &election_results {
+        if v.political_party == *name && v.count.is_some() {
+            votes += v.count.unwrap();
+        }
+    }
+    let candidates: Vec<ElectionResult> = election_results
+        .into_iter()
+        .filter(|c| c.political_party == *name)
+        .collect();
+    let keywords: Vec<String> =
+        get_voice_supporter(data.pool.clone(), candidates.iter().map(|c| c.id).collect()).await;
+    let mut context = Context::new();
+    context.insert("name", name);
+    context.insert("votes", &votes);
+    context.insert("candidates", &candidates);
+    context.insert("keywords", &keywords);
+    match TEMPLATES.render("political_parties.tera.html", &context) {
+        Ok(s) => HttpResponse::Ok().body(s),
+        e => {
+            let _ = dbg!(e);
+            unimplemented!()
+        }
+    }
+}
+
 #[derive(Debug)]
 struct AppData {
     name: &'static str,
@@ -152,6 +236,7 @@ async fn main() -> std::io::Result<()> {
             .service(index)
             .service(initialize)
             .service(get_vote)
+            .service(get_political_parties)
             .service(Files::new("/", "./public/").index_file("index.html"))
             .wrap(Logger::default())
         // .service(vote)
