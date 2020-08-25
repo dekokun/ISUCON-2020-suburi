@@ -4,7 +4,7 @@ use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
 use env_logger;
 use log::info;
 use serde::{Deserialize, Serialize};
-use sqlx::{MySql, MySqlPool, Pool};
+use sqlx::{MySql, MySqlPool, Pool, Row};
 use std::env;
 use tera::{Context, Tera};
 
@@ -150,29 +150,29 @@ async fn get_election_result(pool: Pool<MySql>) -> Vec<ElectionResult> {
 }
 
 async fn get_voice_supporter(pool: Pool<MySql>, candidates_ids: Vec<i32>) -> Vec<String> {
+    if candidates_ids.is_empty() {
+        return vec![];
+    }
     // 動作確認SQL: insert into votes (user_id, candidate_id, keyword) values (1, 16, "応援してます");
-    let mut voices = vec![];
-    for candidates_id in candidates_ids {
-        let mut ret: Vec<String> = sqlx::query!(
-            r#"
+    let bind_params = vec!["?"; candidates_ids.len()].join(",");
+    let query = r#"
     SELECT keyword
     FROM votes
-    WHERE candidate_id = ?
+    WHERE candidate_id IN ("#
+        .to_owned()
+        + &bind_params
+        + r#")
     GROUP BY keyword
     ORDER BY COUNT(*) DESC
     LIMIT 10
-    "#,
-            candidates_id
-        )
-        .fetch_all(&pool)
-        .await
-        .unwrap()
-        .into_iter()
-        .map(|v| v.keyword)
-        .collect();
-        voices.append(&mut ret);
+    "#;
+    dbg!(candidates_ids.len());
+    let mut query = sqlx::query(&query);
+    for candidates_id in candidates_ids {
+        query = query.bind(candidates_id);
     }
-    voices
+    let rows = query.fetch_all(&pool).await.unwrap();
+    rows.into_iter().map(|v| v.get("keyword")).collect()
 }
 
 #[get("/political_parties/{name}")]
