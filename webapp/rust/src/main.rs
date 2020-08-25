@@ -166,7 +166,6 @@ async fn get_voice_supporter(pool: Pool<MySql>, candidates_ids: Vec<i32>) -> Vec
     ORDER BY COUNT(*) DESC
     LIMIT 10
     "#;
-    dbg!(candidates_ids.len());
     let mut query = sqlx::query(&query);
     for candidates_id in candidates_ids {
         query = query.bind(candidates_id);
