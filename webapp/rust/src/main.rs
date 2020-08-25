@@ -93,7 +93,7 @@ async fn get_vote(data: Data) -> impl Responder {
     match TEMPLATES.render("vote.tera.html", &context) {
         Ok(s) => HttpResponse::Ok().body(s),
         e => {
-            dbg!(e);
+            let _ = dbg!(e);
             unimplemented!()
         }
     }
