@@ -154,6 +154,7 @@ async fn get_voice_supporter(pool: Pool<MySql>, candidates_ids: Vec<i32>) -> Vec
         return vec![];
     }
     // 動作確認SQL: insert into votes (user_id, candidate_id, keyword) values (1, 16, "応援してます");
+    // 動作確認URL: https://localhost/political_parties/%E5%A4%A2%E5%AE%9F%E7%8F%BE%E5%85%9A
     let bind_params = vec!["?"; candidates_ids.len()].join(",");
     let query = r#"
     SELECT keyword
