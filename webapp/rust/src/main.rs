@@ -4,7 +4,7 @@ use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
 use env_logger;
 use log::info;
 use serde::{Deserialize, Serialize};
-use sqlx::{query::Query, MySql, MySqlArguments, MySqlPool, Pool, Row, Type};
+use sqlx::{query::Query, MySql, MySqlPool, Pool, Row, Type};
 use std::env;
 use tera::{Context, Tera};
 
@@ -151,7 +151,7 @@ async fn get_election_result(pool: Pool<MySql>) -> Vec<ElectionResult> {
 
 // bind変数部分に? を書いてね
 // example: select * from hoge where fuga in (?);
-fn where_in<'q, T>(
+fn where_in<'q, T: 'q>(
     sql: &str,
     params: Vec<T>,
 ) -> sqlx::query::Query<'q, MySql, sqlx::mysql::MySqlArguments>
