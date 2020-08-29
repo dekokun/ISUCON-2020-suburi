@@ -4,7 +4,7 @@ use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
 use env_logger;
 use log::info;
 use serde::{Deserialize, Serialize};
-use sqlx::{MySql, MySqlPool, Pool, Row};
+use sqlx::{query::Query, MySql, MySqlArguments, MySqlPool, Pool, Row, Type};
 use std::env;
 use tera::{Context, Tera};
 
@@ -147,6 +147,24 @@ async fn get_election_result(pool: Pool<MySql>) -> Vec<ElectionResult> {
     .await
     .unwrap();
     ret
+}
+
+// bind変数部分に? を書いてね
+// example: select * from hoge where fuga in (?);
+fn where_in<'q, T>(
+    sql: &str,
+    params: Vec<T>,
+) -> sqlx::query::Query<'q, MySql, sqlx::mysql::MySqlArguments>
+where
+    T: sqlx::Encode<'q, MySql> + Type<MySql> + std::marker::Send,
+{
+    let bind_params = vec!["?"; params.len()].join(",");
+    let sql = sql.to_owned().replacen("?", &bind_params, 1);
+    let mut query = sqlx::query(&sql);
+    for param in params {
+        query = query.bind(param);
+    }
+    query
 }
 
 async fn get_voice_supporter(pool: Pool<MySql>, candidates_ids: Vec<i32>) -> Vec<String> {
