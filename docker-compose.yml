@@ -26,7 +26,7 @@ services:
       MYSQL_USER: ishocon
       MYSQL_PASSWORD: ishocon
     ports:
-      - 3306:3306
+      - 13306:3306
     volumes:
       - ./docker/mysql:/var/lib/mysql
     container_name: mysql
