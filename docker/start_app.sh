@@ -9,6 +9,6 @@ echo 'setup completed.'
 cd /home/ishocon/webapp/rust/
 export PATH=$PATH:/home/ishocon/.cargo/bin
 cargo build
-cargo flamegraph -- 8080
+cargo flamegraph --dev -- 8080
 
 tail -f /dev/null
