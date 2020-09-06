@@ -1,21 +1,16 @@
-version: '3.0'
+version: "3.0"
 services:
   app:
     build:
       context: .
       dockerfile: Dockerfile_app
     command:
-      [
-        "wait-for-it",
-        "db:3306",
-        "-t",
-        "30",
-        "--",
-        "/docker/start_app.sh",
-      ]
+      ["wait-for-it", "db:3306", "-t", "30", "--", "/docker/start_app.sh"]
     volumes:
       - storage_app:/var/lib/mysql
       - ./webapp:/home/ishocon/webapp
+    cap_add:
+      - CAP_SYS_ADMIN
     ports:
       - "443:443"
   db:
