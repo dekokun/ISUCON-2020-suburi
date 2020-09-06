@@ -13,6 +13,8 @@ services:
       - CAP_SYS_ADMIN
     ports:
       - "443:443"
+    # for flamegraph outputh
+    stop_grace_period: 5m
   db:
     image: mysql:5.7
     environment:
