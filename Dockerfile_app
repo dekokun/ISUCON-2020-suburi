@@ -38,6 +38,7 @@ ENV PATH $PATH:/home/ishocon/.cargo/bin
 COPY webapp/rust/rust-toolchain .
 RUN cargo install cargo-profiler
 RUN cargo install flamegraph
+RUN cargo install cargo-watch
 
 RUN mkdir /home/ishocon/data /home/ishocon/webapp
 COPY admin/ishocon2.dump.tar.bz2 /home/ishocon/data/ishocon2.dump.tar.bz2

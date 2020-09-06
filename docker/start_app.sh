@@ -8,7 +8,7 @@ sudo mysql -h db -u root -pishocon -e 'CREATE DATABASE IF NOT EXISTS ishocon2;' 
 echo 'setup completed.'
 cd /home/ishocon/webapp/rust/
 export PATH=$PATH:/home/ishocon/.cargo/bin
-cargo build
-cargo flamegraph --dev -- 8080
-
-tail -f /dev/null
+# flamegraph
+# cargo build
+# cargo flamegraph --dev -- 8080
+cargo watch -x 'run -- 8080'
