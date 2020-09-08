@@ -2,3 +2,4 @@
 webapp/
 !webapp/rust/rust-toolchain
 docker/mysql/
+admin/ishocon2.dump*
