@@ -1,5 +1,0 @@
-FROM mysql:5.7
-
-ADD admin/ishocon2.dump.tar.bz2 /tmp/ishocon2.dump
-COPY docker/init_db.sh /tmp/init_db.sh
-RUN /tmp/init_db.sh

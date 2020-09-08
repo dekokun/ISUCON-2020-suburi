@@ -16,9 +16,7 @@ services:
     # for flamegraph outputh
     stop_grace_period: 5m
   db:
-    build:
-      context: .
-      dockerfile: Dockerfile_db
+    image: mysql:5.7
     environment:
       MYSQL_ROOT_PASSWORD: ishocon
       MYSQL_DATABASE: ishocon2
@@ -26,6 +24,8 @@ services:
       MYSQL_PASSWORD: ishocon
     ports:
       - 13306:3306
+    volumes:
+      - ./docker/mysql:/var/lib/mysql
     container_name: mysql
 volumes:
   storage_app:
