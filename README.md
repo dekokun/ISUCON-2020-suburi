@@ -3,6 +3,8 @@
 nginx and mysql up
 ```
 $ docker-compose up
+# 初回だけ、以下実行する。dumpデータがDBに入る。1度実行すればあとはローカルのファイルシステムに保存される
+$ docker/init_db.sh
 ```
 
 rust app run
