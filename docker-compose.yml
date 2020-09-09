@@ -7,7 +7,6 @@ services:
     command:
       ["wait-for-it", "db:3306", "-t", "30", "--", "/docker/start_app.sh"]
     volumes:
-      - storage_app:/var/lib/mysql
       - ./webapp:/home/ishocon/webapp
     cap_add:
       - CAP_SYS_ADMIN
